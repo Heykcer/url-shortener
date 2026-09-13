@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color: #030014;
+        --card-bg: rgba(255, 255, 255, 0.03);
+        --primary: #8b5cf6;
+        --secondary: #ec4899;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border: rgba(255, 255, 255, 0.08);
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Outfit", sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Animated background glowing blobs */
+      body::before,
+      body::after {
+        content: "";
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        filter: blur(100px);
+        z-index: -1;
+        animation: float 10s infinite ease-in-out alternate;
+      }
+
+      body::before {
+        background: rgba(139, 92, 246, 0.25); /* Purple glow */
+        top: -100px;
+        left: -100px;
+      }
+
+      body::after {
+        background: rgba(236, 72, 153, 0.25); /* Pink glow */
+        bottom: -100px;
+        right: -100px;
+        animation-delay: -5s;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(50px, 50px) scale(1.1);
+        }
+      }
+
+      .container {
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        padding: 45px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: var(--glass-shadow);
+        text-align: center;
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        z-index: 10;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -1px;
+      }
+
+      p.subtitle {
+        color: var(--text-muted);
+        margin-bottom: 35px;
+        font-size: 1.05rem;
+        font-weight: 300;
+      }
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+
+      input {
+        width: 100%;
+        padding: 18px 24px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        font-size: 1.05rem;
+        outline: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      input:focus {
+        border-color: var(--primary);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+        transform: translateY(-2px);
+      }
+
+      input::placeholder {
+        color: #64748b;
+      }
+
+      button {
+        width: 100%;
+        padding: 18px;
+        border-radius: 16px;
+        border: none;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--secondary) 100%
+        );
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 20px -10px rgba(236, 72, 153, 0.5);
+      }
+
+      button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 25px -10px rgba(236, 72, 153, 0.6);
+        filter: brightness(1.1);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        filter: none;
+      }
+
+      #result {
+        margin-top: 25px;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        opacity: 0;
+        transform: scale(0.95);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      #result.show {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      .result-box {
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        padding: 20px;
+        border-radius: 16px;
+        width: 100%;
+        word-break: break-all;
+        backdrop-filter: blur(8px);
+        box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.05);
+      }
+
+      .result-box a {
+        color: #f472b6;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.2rem;
+        display: inline-block;
+        margin-top: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .result-box a:hover {
+        color: #fbcfe8;
+        text-shadow: 0 0 15px rgba(244, 114, 182, 0.5);
+        transform: translateY(-1px);
+      }
+
+      .error-text {
+        color: #fda4af;
+        background: rgba(225, 29, 72, 0.15);
+        border: 1px solid rgba(225, 29, 72, 0.3);
+        padding: 15px;
+        border-radius: 16px;
+        width: 100%;
+        backdrop-filter: blur(8px);
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 25px;
+        color: rgba(148, 163, 184, 0.6);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Url Shortener</h1>
+      <p class="subtitle">
+        Paste your long link below to get a neat, shortened URL
+      </p>
+
+      <div class="input-group">
+        <input
+          type="url"
+          id="urlInput"
+          placeholder="https://example.com/very-long-url"
+          required
+        />
+        <button id="shortenButton">Shorten URL</button>
+      </div>
+
+      <div id="result"></div>
+      <footer>&copy; URL Shortener. Made by Tanjil Alam.</footer>
+    </div>
+
+    <script>
+      document
+        .getElementById("shortenButton")
+        .addEventListener("click", async () => {
+          const urlInput = document.getElementById("urlInput");
+          const button = document.getElementById("shortenButton");
+          const resultDiv = document.getElementById("result");
+          const url = urlInput.value.trim();
+
+          if (!url) {
+            resultDiv.innerHTML =
+              '<div class="error-text">Please enter a valid URL.</div>';
+            resultDiv.classList.add("show");
+            return;
+          }
+
+          button.disabled = true;
+          button.textContent = "Shortening...";
+          resultDiv.classList.remove("show");
+
+          try {
+            const response = await fetch("/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ longUrl: url }),
+            });
+
+            //   const data = await response.json();
+
+            let data;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              data = await response.json();
+            } else {
+              // This handles the plain text message from express-rate-limit
+              const text = await response.text();
+              data = { error: text };
+            }
+
+            // Small delay for smooth animation
+            setTimeout(() => {
+              if (response.ok) {
+                const fullShortUrl = `${window.location.origin}/${data.shortUrl}`;
+                resultDiv.innerHTML = `
+                            <div class="result-box">
+                                Shortened URL:<br>
+                                <a href="${fullShortUrl}" target="_blank">${fullShortUrl}</a>
+                            </div>
+                        `;
+              } else {
+                resultDiv.innerHTML = `<div class="error-text">Error: ${data.error}</div>`;
+              }
+              resultDiv.classList.add("show");
+              button.disabled = false;
+              button.textContent = "Shorten URL";
+              urlInput.value = "";
+            }, 300);
+          } catch (error) {
+            console.error("Error:", error);
+            setTimeout(() => {
+              resultDiv.innerHTML =
+                '<div class="error-text">An error occurred while shortening the URL.</div>';
+              resultDiv.classList.add("show");
+              button.disabled = false;
+              button.textContent = "Shorten URL";
+            }, 300);
+          }
+        });
+
+      // Allow pressing Enter to submit
+      document.getElementById("urlInput").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          document.getElementById("shortenButton").click();
+        }
+      });
+    </script>
+  </body>
+</html>
