@@ -244,6 +244,77 @@
         color: rgba(148, 163, 184, 0.6);
         font-size: 0.9rem;
       }
+
+      .how-it-works {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 1px solid var(--border);
+      }
+
+      .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        opacity: 0.4;
+        transition: all 0.4s ease;
+      }
+
+      .step.active, .step.completed {
+        opacity: 1;
+      }
+
+      .step.active .step-icon {
+        border-color: var(--primary);
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        animation: pulse 1.5s infinite;
+      }
+
+      .step.completed .step-icon {
+        background: rgba(139, 92, 246, 0.2);
+        border-color: var(--primary);
+      }
+
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+      }
+
+      .step-icon {
+        font-size: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.02);
+        transition: transform 0.3s ease;
+      }
+
+      .step:hover .step-icon {
+        transform: translateY(-3px);
+        border-color: var(--primary);
+      }
+
+      .step span {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+
+      .step-arrow {
+        color: var(--primary);
+        font-size: 1.2rem;
+        opacity: 0.7;
+      }
     </style>
   </head>
   <body>
@@ -264,10 +335,36 @@
       </div>
 
       <div id="result"></div>
+
+      <div class="how-it-works">
+        <div class="step active" id="step-1">
+          <div class="step-icon">🔗</div>
+          <span>Paste URL</span>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-2">
+          <div class="step-icon">⚙️</div>
+          <span>Compress</span>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-3">
+          <div class="step-icon">✨</div>
+          <span>Get Link</span>
+        </div>
+      </div>
+
       <footer>&copy; URL Shortener. Made by Tanjil Alam.</footer>
     </div>
 
     <script>
+      const resetSteps = () => {
+        document.getElementById("step-1").className = "step active";
+        document.getElementById("step-2").className = "step";
+        document.getElementById("step-3").className = "step";
+      };
+
+      document.getElementById("urlInput").addEventListener("input", resetSteps);
+
       document
         .getElementById("shortenButton")
         .addEventListener("click", async () => {
@@ -287,14 +384,22 @@
           button.textContent = "Shortening...";
           resultDiv.classList.remove("show");
 
+          resetSteps();
+          document.getElementById("step-1").className = "step completed";
+          document.getElementById("step-2").className = "step active";
+
           try {
-            const response = await fetch("/", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ longUrl: url }),
-            });
+            // Force an 800ms delay so the user actually sees the loading animation!
+            const [response] = await Promise.all([
+              fetch("/", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ longUrl: url }),
+              }),
+              new Promise((resolve) => setTimeout(resolve, 800))
+            ]);
 
             //   const data = await response.json();
 
@@ -311,6 +416,8 @@
             // Small delay for smooth animation
             setTimeout(() => {
               if (response.ok) {
+                document.getElementById("step-2").className = "step completed";
+                document.getElementById("step-3").className = "step completed";
                 const fullShortUrl = `${window.location.origin}/${data.shortUrl}`;
                 resultDiv.innerHTML = `
                             <div class="result-box">
@@ -319,6 +426,7 @@
                             </div>
                         `;
               } else {
+                document.getElementById("step-2").className = "step";
                 resultDiv.innerHTML = `<div class="error-text">Error: ${data.error}</div>`;
               }
               resultDiv.classList.add("show");
@@ -329,6 +437,7 @@
           } catch (error) {
             console.error("Error:", error);
             setTimeout(() => {
+              document.getElementById("step-2").className = "step";
               resultDiv.innerHTML =
                 '<div class="error-text">An error occurred while shortening the URL.</div>';
               resultDiv.classList.add("show");
