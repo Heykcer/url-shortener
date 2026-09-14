@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import config from "./env.js";
+import pg from "pg";
 
 
 
@@ -13,6 +14,7 @@ if (connectionString) {
   // Production: Use Neon connection string
   sequelize = new Sequelize(connectionString, {
     dialect: "postgres",
+    dialectModule: pg,
     logging: false,
     pool: {
       max: parseInt(process.env.DB_POOL_MAX, 10) || 5,
@@ -37,6 +39,7 @@ if (connectionString) {
       host: process.env.DB_HOST || "localhost",
       port: process.env.DB_PORT || 5432,
       dialect: "postgres",
+      dialectModule: pg,
       logging: false,
     }
   );
